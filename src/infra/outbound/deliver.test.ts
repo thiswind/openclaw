@@ -288,6 +288,24 @@ describe("deliverOutboundPayloads", () => {
     );
   });
 
+  it("prefixes BTW replies for telegram delivery", async () => {
+    const sendTelegram = vi.fn().mockResolvedValue({ messageId: "m1", chatId: "c1" });
+
+    await deliverTelegramPayload({
+      sendTelegram,
+      cfg: {
+        channels: { telegram: { botToken: "tok-1", textChunkLimit: 100 } },
+      },
+      payload: { text: "323", btw: { question: "what is 17 * 19?" } },
+    });
+
+    expect(sendTelegram).toHaveBeenCalledWith(
+      "123",
+      "BTW: 323",
+      expect.objectContaining({ verbose: false, textMode: "html" }),
+    );
+  });
+
   it("preserves HTML text for telegram sendPayload channelData path", async () => {
     const sendTelegram = vi.fn().mockResolvedValue({ messageId: "m1", chatId: "c1" });
 
@@ -723,6 +741,17 @@ describe("deliverOutboundPayloads", () => {
       { text: "hi", mediaUrls: [] },
       { text: "", mediaUrls: ["https://x.test/a.jpg"] },
     ]);
+  });
+
+  it("prefixes BTW replies for whatsapp delivery", async () => {
+    const sendWhatsApp = vi.fn().mockResolvedValue({ messageId: "w1", toJid: "jid" });
+
+    await deliverWhatsAppPayload({
+      sendWhatsApp,
+      payload: { text: "323", btw: { question: "what is 17 * 19?" } },
+    });
+
+    expect(sendWhatsApp).toHaveBeenCalledWith("+1555", "BTW: 323", expect.any(Object));
   });
 
   it("continues on errors when bestEffort is enabled", async () => {
